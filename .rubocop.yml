@@ -1,0 +1,9 @@
+Metrics/AbcSize:
+  Exclude: 
+    - lib/**/formatter.rb
+Metrics/MethodLength:
+  Max: 35 
+Metrics/LineLength:
+  Max: 120
+Layout/ElseAlignment:
+  Enabled: false 
