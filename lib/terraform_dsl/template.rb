@@ -28,9 +28,12 @@ module TerraformDSL
     def child_block(value)
       labels = value.__labels__.nil? ? [] : value.__labels__
       labels_str = labels.map { |l| %("#{l}") }.join ' '
-      template = <<-TEXT.gsub(/^ {4}/, '')
-      <%=value.__type__%> <%=labels_str%> {
-          <%=value.to_tf.strip%>
+      type = value.__type__.nil? ? '' : %( #{value.__type__} )
+      template = <<-TEXT.gsub(/^ {6}/, '')
+      <%=type%><%=labels_str%> {
+      <%- unless value.to_s.empty? -%>
+          <%=value.strip%>
+      <%- end -%>
       }
       TEXT
       ERB.new(template, nil, '-').result(binding).strip

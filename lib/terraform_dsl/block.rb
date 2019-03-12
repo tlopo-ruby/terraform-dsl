@@ -12,7 +12,7 @@ module TerraformDSL
       method = method_name.to_s.gsub(/=$/, '')
 
       if block_given?
-        r = new
+        r = Block.new
         r.__type__ = method
         r.__labels__ = args
         @__blocks__ << r

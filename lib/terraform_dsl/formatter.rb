@@ -3,6 +3,9 @@ module TerraformDSL
   class Formatter
     def kind(cls)
       kinds = {
+        Provider => 'provider',
+        TFModule => 'module',
+        Locals => 'locals',
         Resource => 'resource',
         Variable => 'variable',
         DataSource => 'data',
@@ -35,7 +38,8 @@ module TerraformDSL
       labels = tf_block.__labels__.nil? ? [] : tf_block.__labels__
       labels_str = labels.map { |l| %("#{l}") }.join ' '
       kind = kind tf_block.class
-      %(#{kind} "#{tf_block.__type__}" #{labels_str} {)
+      type = tf_block.__type__.to_s.empty? ? '' : %( "#{tf_block.__type__}" )
+      "#{kind}#{type}#{labels_str} {"
     end
 
     def local_vars(tf_block)
@@ -53,7 +57,6 @@ module TerraformDSL
     end
 
     def child_blocks(tf_block)
-      p [tf_block]
       str = ''
       tf_block.__blocks__.each do |b|
         @depth += 1

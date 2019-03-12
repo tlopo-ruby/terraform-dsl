@@ -3,27 +3,30 @@ module TerraformDSL
   # is a collection of terraform configuration blocks
   class Stack
     def initialize(&block)
-      @resources, @outputs, @variables, @datasources = (1..4).to_a.map { [] }
+      %w[providers variables locals  tfmodules datasources resources outputs].each do |word|
+        instance_variable_set "@#{word}", []
+      end
       instance_eval(&block) if block_given?
     end
 
-    %w[Resource Output Variable DataSource].each do |word|
-      define_method word.downcase do |type, *labels, &b|
+    %w[Provider Variable Locals TFModule DataSource Resource Output].each do |word|
+      define_method word.downcase do |type='', *labels, &b|
         cls = Object.const_get "TerraformDSL::#{word}"
         w = cls.new
         w.__type__ = type
         w.__labels__ = labels
-        instance_variable_get("@#{word.downcase}s") << w
+        var_name = "@#{word.downcase}"
+        var_name += 's' unless var_name[-1] == 's'
+        instance_variable_get(var_name) << w
         w.instance_eval(&b)
       end
     end
 
     def to_s
       str = ''
-      @variables.each { |v| str << v }
-      @datasources.each { |d| str << d }
-      @resources.each { |r| str << r }
-      @outputs.each { |o| str << o }
+      %w[providers variables locals tfmodules datasources resources outputs].each do |word|
+        instance_variable_get("@#{word}").each {|var| str << var}
+      end
       str
     end
   end
