@@ -4,22 +4,22 @@ module TerraformDSL
     module_function
 
     def list(name, value)
-      template = <<-TEXT.gsub(/^ {4}/, '')
+      template = <<-TEXT.gsub(/^ {6}/, '')
       <%=name%> = [
-        <%-value.each_with_index do |v,index| -%>
+      <%-value.each_with_index do |v,index| -%>
           "<%=v%>"<%=index != value.size - 1 ? ',' : '' %>
-        <%-end-%>
+      <%-end-%>
       ]
       TEXT
       ERB.new(template, nil, '-').result(binding).strip
     end
 
     def map(name, value)
-      template = <<-TEXT.gsub(/^ {4}/, '')
+      template = <<-TEXT.gsub(/^ {6}/, '')
       <%=name%> = {
-        <%-value.each_with_index do |(k,v),index| -%>
-          <%=k%> = <%=v%><%=index != value.size - 1 ? ',' : '' %>
-        <%-end-%>
+      <%-value.each do |k,v| -%>
+          <%=k%> = "<%=v%>"
+      <%-end-%>
       }
       TEXT
       ERB.new(template, nil, '-').result(binding).strip
@@ -32,7 +32,7 @@ module TerraformDSL
       template = <<-TEXT.gsub(/^ {6}/, '')
       <%=type%><%=labels_str%> {
       <%- unless value.to_s.empty? -%>
-          <%=value.strip%>
+      <%=value.to_tf.strip.gsub(/^/,'    ')%>
       <%- end -%>
       }
       TEXT
@@ -40,7 +40,7 @@ module TerraformDSL
     end
 
     def value(name, value)
-      template = <<-TEXT.gsub(/^ {4}/, '')
+      template = <<-TEXT.gsub(/^ {6}/, '')
       <%=name%> = "<%=value%>"
       TEXT
       ERB.new(template, nil, '-').result(binding).strip

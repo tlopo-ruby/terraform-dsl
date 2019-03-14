@@ -26,8 +26,7 @@ module TerraformDSL
       str << local_vars(tf_block) unless local_vars(tf_block).empty?
 
       str << child_blocks(tf_block) unless tf_block.__blocks__.empty?
-
-      str[1..-1] = str[1..-1].map { |line| line.gsub(/^/, ' ' * 4) }
+      str[1..-1] = str[1..-1].map { |line| line.gsub(/^/, ' ' * 4) } unless str[1..-1].nil?
       str << "}\n\n" if close
       str.join("\n")
     end
@@ -43,7 +42,7 @@ module TerraformDSL
     end
 
     def local_vars(tf_block)
-      str = ''
+      str = []
       tf_block.instance_variables.sort.each do |var_name|
         next if var_name =~ /@__/
 
@@ -53,15 +52,15 @@ module TerraformDSL
         str << Template.map(var_name, var) if var.class == Hash
         str << Template.value(var_name, var) unless [Array, Hash].include? var.class
       end
-      str
+      str.join "\n"
     end
 
     def child_blocks(tf_block)
       str = ''
       tf_block.__blocks__.each do |b|
         @depth += 1
-        child =  Template.child_block b
         indent = ' ' * 4
+        child =  Template.child_block b
         child = child.gsub(/^/, indent) if @depth > 1
         str << child
         @depth -= 1

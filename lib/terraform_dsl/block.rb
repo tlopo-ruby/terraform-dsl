@@ -3,6 +3,7 @@ module TerraformDSL
   # https://www.terraform.io/docs/configuration/
   class Block
     attr_reader :__type__, :__labels__
+    @@formatter = Formatter.new
     def initialize(&block)
       @__blocks__ = []
       instance_eval(&block) if block_given?
@@ -29,8 +30,16 @@ module TerraformDSL
       super
     end
 
+    def to_tf
+      @@formatter.format self
+    end
+
     def to_str
-      Formatter.new.format self
+      to_tf
+    end
+
+    def to_s
+      to_tf
     end
   end
 end

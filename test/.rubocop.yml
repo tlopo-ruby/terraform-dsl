@@ -1,19 +1,15 @@
-Layout/IndentArray:
+inherit_from:
+  - ../.rubocop.yml
+Style/ClassAndModuleChildren:
   Enabled: false
-Style/ClassVars:
-  Exclude:
-    - lib/**/block.rb
 Metrics/AbcSize:
   Exclude: 
     - lib/**/formatter.rb
 Metrics/MethodLength:
-  Max: 35 
+  Enabled: false
 Metrics/LineLength:
   Max: 120
   Exclude:
     - test/**/*
 Layout/ElseAlignment:
-  Enabled: false
-Metrics/BlockLength:
-  Exclude:
-    - '*.gemspec' 
+  Enabled: false 
