@@ -34,6 +34,15 @@ class TerraformDSL::FormatterTest < Minitest::Test
         }
     }
 
+    resource "null_resource" "foo" {
+        triggers  {
+            foo = "bar"
+        }
+        provider "local-exec" {
+            command = "whoami"
+        }
+    }
+
     TEXT
     stack = TerraformDSL::Stack.new do
       terraform do
@@ -41,6 +50,7 @@ class TerraformDSL::FormatterTest < Minitest::Test
           path 'relative/path/to/terraform.tfstate'
         end
       end
+
       variable 'images' do
         type 'map'
         default(
@@ -55,6 +65,15 @@ class TerraformDSL::FormatterTest < Minitest::Test
         filter do
           name 'state'
           values ['available']
+        end
+      end
+
+      resource 'null_resource', 'foo' do
+        triggers do
+          foo 'bar'
+        end
+        provider 'local-exec' do
+          command 'whoami'
         end
       end
     end

@@ -57,7 +57,7 @@ module TerraformDSL
     end
 
     def child_blocks(tf_block)
-      str = ''
+      str = []
       tf_block.__blocks__.each do |b|
         @depth += 1
         indent = ' ' * 4
@@ -66,7 +66,7 @@ module TerraformDSL
         str << child
         @depth -= 1
       end
-      str
+      str.join("\n")
     end
   end
 end
