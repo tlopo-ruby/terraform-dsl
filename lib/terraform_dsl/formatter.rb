@@ -9,7 +9,8 @@ module TerraformDSL
         Resource => 'resource',
         Variable => 'variable',
         DataSource => 'data',
-        Output => 'output'
+        Output => 'output',
+        Terraform => 'terraform'
       }
       kinds[cls]
     end

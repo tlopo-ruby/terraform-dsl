@@ -10,6 +10,7 @@ module TerraformDSL
     end
 
     def method_missing(method_name, *args, &block)
+      super if [:respond_to_missing?].include? method_name
       method = method_name.to_s.gsub(/=$/, '')
 
       if block_given?
@@ -22,12 +23,10 @@ module TerraformDSL
 
       return instance_variable_set "@#{method}", *args unless args.empty?
       return instance_variable_get "@#{method}" if args.empty?
-
-      super
     end
 
-    def respond_to_missing?(*args)
-      super
+    def respond_to_missing?(_method_name, _include_private = true)
+      true
     end
 
     def to_tf

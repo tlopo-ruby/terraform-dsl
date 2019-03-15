@@ -8,6 +8,12 @@ class TerraformDSL::FormatterTest < Minitest::Test
 
   def test_it_formats_stack
     expected = <<-TEXT.gsub(/^ {4}/, '')
+    terraform {
+        backend "local" {
+            path = "relative/path/to/terraform.tfstate"
+        }
+    }
+
     variable "images"  {
         default = {
             us-east-1 = "ami-123456"
@@ -30,6 +36,11 @@ class TerraformDSL::FormatterTest < Minitest::Test
 
     TEXT
     stack = TerraformDSL::Stack.new do
+      terraform do
+        backend 'local' do
+          path 'relative/path/to/terraform.tfstate'
+        end
+      end
       variable 'images' do
         type 'map'
         default(

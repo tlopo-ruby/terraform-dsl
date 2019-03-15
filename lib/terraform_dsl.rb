@@ -16,5 +16,6 @@ module TerraformDSL
   require "#{LIB_DIR}/provider"
   require "#{LIB_DIR}/tfmodule"
   require "#{LIB_DIR}/locals"
+  require "#{LIB_DIR}/terraform"
   require "#{LIB_DIR}/stack"
 end

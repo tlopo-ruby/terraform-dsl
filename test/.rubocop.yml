@@ -12,4 +12,6 @@ Metrics/LineLength:
   Exclude:
     - test/**/*
 Layout/ElseAlignment:
+  Enabled: false
+Metrics/AbcSize:
   Enabled: false 
