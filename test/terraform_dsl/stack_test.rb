@@ -1,12 +1,6 @@
 require 'test_helper'
 class TerraformDSL::FormatterTest < Minitest::Test
-  def new_formatter
-    f = TerraformDSL::Formatter.new
-    %i[first_line local_vars child_blocks].each { |method| f.class.send :public, method }
-    f
-  end
-
-  def test_it_formats_stack
+  def test_stack_composition
     expected = <<-TEXT.gsub(/^ {4}/, '')
     terraform {
         backend "local" {
