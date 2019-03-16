@@ -1,8 +1,8 @@
-# TerraformDsl
+# TFDSL
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/terraform_dsl`. To experiment with that code, run `bin/console` for an interactive prompt.
+A Chef like DSL for Terraform.
 
-TODO: Delete this and the text above, and describe your gem
+Terraform use HCL for its configuration, which is better than json or yaml in my opinion, but still not quite as flexible as Chef DSL, so here it's a chef like DSL for terraform.
 
 ## Installation
 
@@ -22,8 +22,33 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+A quick usage example 
+```ruby
+require 'tfdsl'
+  
+stack = TFDSL.stack do
+  resource 'aws_vpc', 'main' do
+    cidr_block '10.0.0.0/16'
+    instance_tenacy 'dedicated'
+    tags do
+      Name 'main'
+    end
+  end
+end
 
+puts stack
+```
+The code above will produce the output below: 
+```hcl
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+  instance_tenancy = "dedicated"
+
+  tags = {
+    Name = "main"
+  }
+}
+```
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
