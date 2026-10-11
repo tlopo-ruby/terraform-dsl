@@ -1,4 +1,7 @@
+# frozen_string_literal: true
+
 module TerraformDSL
-  class Output < Resource
+  class Output < Block
+    KEYWORD = 'output'
   end
 end

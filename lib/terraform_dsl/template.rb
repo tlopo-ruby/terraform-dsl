@@ -1,49 +1,74 @@
+# frozen_string_literal: true
+
 module TerraformDSL
-  # Collection of small templates to be used on to_s / to_str of blocks
+  # Renders Ruby values as HCL values.
+  #
+  #   String  -> "quoted"  (heredoc when it ends with a newline)
+  #   Symbol  -> raw expression, e.g. :'aws_vpc.main.id' or :string
+  #   Numeric, true, false -> as is
+  #   nil     -> null
+  #   Array   -> [ ... ]
+  #   Hash    -> { key = value }
   module Template
     module_function
 
-    def list(name, value)
-      template = <<-TEXT.gsub(/^ {6}/, '')
-      <%=name%> = [
-      <%-value.each_with_index do |v,index| -%>
-          "<%=v%>"<%=index != value.size - 1 ? ',' : '' %>
-      <%-end-%>
-      ]
-      TEXT
-      ERB.new(template, nil, '-').result(binding).strip
+    IDENTIFIER = /\A[A-Za-z_][\w-]*\z/.freeze
+    ESCAPES = { '"' => '\"', '\\' => '\\\\', "\n" => '\n', "\r" => '\r', "\t" => '\t' }.freeze
+
+    def value(value, depth = 0)
+      case value
+      when Hash then map(value, depth)
+      when Array then list(value, depth)
+      when String then string(value, depth)
+      when nil then 'null'
+      else value.to_s # Symbol (raw expression), Numeric, true, false
+      end
     end
 
-    def map(name, value)
-      template = <<-TEXT.gsub(/^ {6}/, '')
-      <%=name%> = {
-      <%-value.each do |k,v| -%>
-          <%=k%> = "<%=v%>"
-      <%-end-%>
-      }
-      TEXT
-      ERB.new(template, nil, '-').result(binding).strip
+    def string(str, depth = 0)
+      return heredoc(str, depth) if str.end_with?("\n")
+
+      %("#{str.gsub(/["\\\n\r\t]/, ESCAPES)}")
     end
 
-    def child_block(value)
-      labels = value.__labels__.nil? ? [] : value.__labels__
-      labels_str = labels.map { |l| %("#{l}") }.join ' '
-      type = value.__type__.nil? ? '' : %( #{value.__type__} )
-      template = <<-TEXT.gsub(/^ {6}/, '')
-      <%=type%><%=labels_str%> {
-      <%- unless value.to_s.empty? -%>
-      <%=value.to_tf.strip.gsub(/^/,'    ')%>
-      <%- end -%>
-      }
-      TEXT
-      ERB.new(template, nil, '-').result(binding).strip
+    def heredoc(str, depth)
+      pad = INDENT * depth
+      "<<-EOT\n#{str.gsub(/^(?!$)/, pad + INDENT)}#{pad}EOT"
     end
 
-    def value(name, value)
-      template = <<-TEXT.gsub(/^ {6}/, '')
-      <%=name%> = "<%=value%>"
-      TEXT
-      ERB.new(template, nil, '-').result(binding).strip
+    def list(array, depth)
+      return '[]' if array.empty?
+
+      pad = INDENT * depth
+      items = array.map { |v| "#{pad}#{INDENT}#{value(v, depth + 1)}" }
+      "[\n#{items.join(",\n")}\n#{pad}]"
+    end
+
+    def map(hash, depth)
+      return '{}' if hash.empty?
+
+      pad = INDENT * depth
+      items = hash.map { |k, v| [key(k), value(v, depth + 1)] }
+      "{\n#{assignments(items, pad + INDENT).join("\n")}\n#{pad}}"
+    end
+
+    # Renders [name, value] pairs as "name = value" lines, aligning the equals
+    # signs the way terraform fmt does: consecutive single-line values share a
+    # column, a multi-line value ({ or [) breaks the run and is not aligned.
+    def assignments(pairs, pad)
+      pairs.slice_when { |a, b| multiline?(a[1]) || multiline?(b[1]) }.flat_map do |run|
+        width = run.map { |name, _| name.size }.max
+        run.map { |name, value| "#{pad}#{name.ljust(width)} = #{value}" }
+      end
+    end
+
+    def multiline?(value)
+      value.start_with?("{\n", "[\n")
+    end
+
+    def key(key)
+      key = key.to_s
+      key.match?(IDENTIFIER) ? key : string(key)
     end
   end
 end

@@ -1,25 +1,30 @@
+# frozen_string_literal: true
+
 module TerraformDSL
-  # This class is the representation of a terraform stack, or in another words
-  # is a collection of terraform configuration blocks
+  # A collection of top level terraform blocks, rendered as one .tf file.
   class Stack
+    BLOCKS = {
+      terraform: Terraform, provider: Provider, variable: Variable, locals: Locals,
+      tfmodule: TFModule, datasource: DataSource, resource: Resource, output: Output,
+      moved: Moved, import: Import, removed: Removed, check: Check,
+      ephemeral: Ephemeral, action: Action
+    }.freeze
+
     def initialize(&block)
       @objects = []
-      instance_eval(&block) if block_given?
+      instance_eval(&block) if block
     end
 
-    %w[Provider Variable Locals TFModule DataSource Resource Output Terraform].each do |word|
-      define_method word.downcase do |type = '', *labels, &b|
-        cls = Object.const_get "TerraformDSL::#{word}"
-        w = cls.new
-        w.__type__ = type
-        w.__labels__ = labels
-        @objects << w
-        w.instance_eval(&b) unless b.nil?
+    BLOCKS.each do |name, cls|
+      define_method(name) do |type = nil, *labels, &block|
+        @objects << cls.new(type, *labels, &block)
+        @objects.last
       end
     end
+    alias data datasource
 
     def to_s
-      @objects.each_with_object('') { |o, str| str << o }
+      @objects.map(&:to_tf).join("\n")
     end
   end
 end
