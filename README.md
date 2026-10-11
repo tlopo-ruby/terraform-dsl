@@ -1,4 +1,4 @@
-# TerraformDSL
+# tfdsl
 
 A Chef like Ruby DSL that renders Terraform (HCL) configuration.
 
@@ -11,7 +11,7 @@ gives you, and renders them as `terraform fmt` formatted HCL.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'terraform_dsl'
+gem 'tfdsl'
 ```
 
 And then execute:
@@ -20,7 +20,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install terraform_dsl
+    $ gem install tfdsl
 
 ## Usage
 
@@ -146,6 +146,10 @@ surrounding class are not reachable from inside a block because `self` is the bl
 
 Ruby keywords such as `alias` cannot be called bare, so use the assignment form:
 `self.alias = 'west'`.
+
+`require 'tfdsl'` also works and defines `TFDSL` as an alias of `TerraformDSL`, for code written
+against tfdsl 0.1.x. Note that 0.2.0 changed the output format: values are typed, references are
+written as Symbols, and `to_json` renders bare strings for static references.
 
 Each block class can also be used on its own:
 
