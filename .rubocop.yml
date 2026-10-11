@@ -1,19 +1,30 @@
-Layout/IndentArray:
+AllCops:
+  TargetRubyVersion: 2.7
+  NewCops: enable
+  SuggestExtensions: false
+
+Style/Documentation:
   Enabled: false
-Style/ClassVars:
-  Exclude:
-    - lib/**/block.rb
-Metrics/AbcSize:
-  Exclude: 
-    - lib/**/formatter.rb
-Metrics/MethodLength:
-  Max: 35 
-Metrics/LineLength:
+
+Layout/LineLength:
   Max: 120
-  Exclude:
-    - test/**/*
-Layout/ElseAlignment:
-  Enabled: false
+
 Metrics/BlockLength:
   Exclude:
-    - '*.gemspec' 
+    - '*.gemspec'
+    - test/**/*
+
+Metrics/MethodLength:
+  Exclude:
+    - test/**/*
+
+Style/ClassAndModuleChildren:
+  Exclude:
+    - test/**/*
+
+Metrics/AbcSize:
+  Max: 20
+
+Metrics:
+  Exclude:
+    - test/**/*
