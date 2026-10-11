@@ -34,7 +34,8 @@ the builtin `terraform_data` resource so no provider download is needed.
 
 ## Architecture
 
-Rendering flows `Stack -> Block -> Formatter -> Template`:
+HCL rendering flows `Stack -> Block -> Formatter -> Template`; JSON rendering flows
+`Stack#to_h -> Block#to_h -> JsonSyntax`:
 
 - **`Block`** (`lib/terraform_dsl/block.rb`) is the whole DSL. `method_missing` turns a call with
   arguments into an entry in the ordered `@__attrs__` hash and a call with a Ruby block into a child
@@ -62,6 +63,14 @@ Rendering flows `Stack -> Block -> Formatter -> Template`:
   `terraform fmt`'s `=` alignment: consecutive single-line values share a column, a multi-line
   `{`/`[` value breaks the run and is itself unaligned. Blank lines inside heredocs must stay empty
   (Terraform ignores them when computing `<<-` indentation; padding them changes the value).
+- **`JsonSyntax`** backs `Block#to_h`, `Stack#to_h` and `Stack#to_json` (Terraform JSON syntax, used by
+  consumers that write `.tf.json`). `JsonSyntax.value` wraps Symbols as `"${...}"`, except for attributes
+  listed in the block class's `STATIC_REFS` (`provider`, `depends_on`, `ignore_changes`, a variable's
+  `type`, `moved`/`import`/`removed` addresses), which JSON syntax requires as bare reference strings.
+  `terraform validate` rejects `${}` there, so extend `STATIC_REFS` when adding such an argument. `JsonSyntax.insert` nests a body under
+  `[keyword, type, *labels]` and turns a repeated path into an array, which is how repeated blocks
+  (`provider "aws"` twice, two `ingress` blocks) are expressed. `terraform_test.rb` validates a generated
+  `.tf.json` as well as the `.tf`.
 
 ## Testing conventions
 
@@ -70,3 +79,5 @@ Rendering flows `Stack -> Block -> Formatter -> Template`:
   output. Any change to rendering must keep that fixture passing `fmt -check`; update `EXPECTED` to
   the canonical `terraform fmt` form, never the other way round.
 - Fixtures must be valid Terraform 0.12+ (e.g. `provisioner`, not `provider`, inside a resource).
+- `alias` is a Ruby keyword; in the DSL it is written `self.alias = 'west'` (the `=` suffix is stripped
+  by `method_missing`).

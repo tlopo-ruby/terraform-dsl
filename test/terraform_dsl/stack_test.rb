@@ -232,6 +232,64 @@ class TerraformDSL::StackTest < Minitest::Test
     assert_equal "data \"aws_ami\" \"x\" {\n}\n", stack.to_s
   end
 
+  def test_to_h_follows_terraform_json_syntax
+    stack = TerraformDSL::Stack.new do
+      provider 'aws' do
+        region 'us-east-1'
+      end
+      provider 'aws' do
+        self.alias = 'west'
+        region 'us-west-2'
+      end
+      variable 'images' do
+        type :'map(string)'
+        default a: 'b'
+      end
+      resource 'aws_instance', 'web' do
+        provider :'aws.west'
+        depends_on [:'aws_vpc.main']
+        ami :'var.ami'
+        tags Name: :'local.name', Ports: [80, :'var.port']
+        provisioner('local-exec') { command 'a' }
+        provisioner('local-exec') { command 'b' }
+        ingress { from_port 80 }
+        ingress { from_port 443 }
+        lifecycle do
+          ignore_changes [:tags]
+          precondition do
+            condition :'var.ami != ""'
+            error_message 'x'
+          end
+        end
+      end
+      moved do
+        from :'aws_instance.old'
+        to :'aws_instance.web'
+      end
+    end
+
+    expected = {
+      'provider' => { 'aws' => [{ 'region' => 'us-east-1' }, { 'alias' => 'west', 'region' => 'us-west-2' }] },
+      'variable' => { 'images' => { 'type' => 'map(string)', 'default' => { 'a' => 'b' } } },
+      'resource' => { 'aws_instance' => { 'web' => {
+        'provider' => 'aws.west',
+        'depends_on' => ['aws_vpc.main'],
+        'ami' => '${var.ami}',
+        'tags' => { 'Name' => '${local.name}', 'Ports' => [80, '${var.port}'] },
+        'provisioner' => { 'local-exec' => [{ 'command' => 'a' }, { 'command' => 'b' }] },
+        'ingress' => [{ 'from_port' => 80 }, { 'from_port' => 443 }],
+        'lifecycle' => {
+          'ignore_changes' => ['tags'],
+          'precondition' => { 'condition' => '${var.ami != ""}', 'error_message' => 'x' }
+        }
+      } } },
+      'moved' => { 'from' => 'aws_instance.old', 'to' => 'aws_instance.web' }
+    }
+    assert_equal expected, stack.to_h
+    assert_equal expected, JSON.parse(stack.to_json)
+    assert_equal JSON.pretty_generate(expected), stack.to_json
+  end
+
   def test_block_methods_return_the_block
     stack = TerraformDSL::Stack.new
     block = stack.resource('null_resource', 'x') { triggers a: 1 }

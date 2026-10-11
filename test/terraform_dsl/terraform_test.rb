@@ -12,15 +12,30 @@ class TerraformDSL::TerraformTest < Minitest::Test
   end
 
   def test_stack_output_is_canonically_formatted
-    in_tmp_tf(TerraformDSL::StackTest.stack.to_s) do
+    in_tmp_dir('main.tf' => TerraformDSL::StackTest.stack.to_s) do
       terraform 'fmt', '-check', '-diff', 'main.tf'
+    end
+  end
+
+  def test_generated_hcl_is_valid
+    in_tmp_dir('main.tf' => self.class.validate_stack.to_s) do
+      terraform 'fmt', '-check', '-diff', 'main.tf'
+      terraform 'init', '-backend=false', '-input=false'
+      terraform 'validate'
+    end
+  end
+
+  def test_generated_json_is_valid
+    in_tmp_dir('main.tf.json' => self.class.validate_stack.to_json) do
+      terraform 'init', '-backend=false', '-input=false'
+      terraform 'validate'
     end
   end
 
   # Only the builtin terraform_data resource is used so that no provider has
   # to be downloaded.
-  def test_generated_configuration_is_valid
-    stack = TerraformDSL.stack do
+  def self.validate_stack
+    TerraformDSL.stack do
       terraform do
         required_version '>= 1.5'
       end
@@ -46,12 +61,27 @@ class TerraformDSL::TerraformTest < Minitest::Test
             condition :'var.name != ""'
             error_message 'name is required'
           end
+          precondition do
+            condition :'local.tags.Count > 0'
+            error_message 'count is required'
+          end
+        end
+        provisioner 'local-exec' do
+          command 'echo one'
+        end
+        provisioner 'local-exec' do
+          command 'echo two'
         end
       end
 
       resource 'terraform_data', 'many' do
         count 2
         input :'count.index'
+        depends_on [:'terraform_data.web']
+        lifecycle do
+          ignore_changes [:input]
+          replace_triggered_by [:'terraform_data.web']
+        end
       end
 
       moved do
@@ -83,25 +113,20 @@ class TerraformDSL::TerraformTest < Minitest::Test
         description 'say "hi"'
       end
     end
-
-    in_tmp_tf(stack.to_s) do
-      terraform 'fmt', '-check', '-diff', 'main.tf'
-      terraform 'init', '-backend=false', '-input=false'
-      terraform 'validate'
-    end
   end
 
   private
 
-  def in_tmp_tf(hcl, &block)
+  def in_tmp_dir(files, &block)
     Dir.mktmpdir do |dir|
-      File.write File.join(dir, 'main.tf'), hcl
+      files.each { |name, content| File.write File.join(dir, name), content }
       Dir.chdir(dir, &block)
     end
   end
 
   def terraform(*args)
     out, status = Open3.capture2e('terraform', *args)
-    assert status.success?, "terraform #{args.join(' ')} failed:\n#{out}\n--- main.tf:\n#{File.read('main.tf')}"
+    files = Dir['*'].map { |f| "--- #{f}:\n#{File.read(f)}" }.join
+    assert status.success?, "terraform #{args.join(' ')} failed:\n#{out}\n#{files}"
   end
 end

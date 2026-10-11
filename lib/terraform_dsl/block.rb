@@ -8,6 +8,9 @@ module TerraformDSL
   # block). Subclasses set KEYWORD to the top-level block keyword.
   class Block
     KEYWORD = nil
+    # Arguments that take static references, which JSON syntax wants as plain
+    # strings rather than "${...}" expressions. Subclasses extend the list.
+    STATIC_REFS = %w[provider providers depends_on ignore_changes replace_triggered_by].freeze
 
     # Ruby methods a Block keeps. Everything else Object provides is undefined
     # so that it can be used as an attribute name (class, hash, method, ...).
@@ -42,6 +45,16 @@ module TerraformDSL
 
     def to_tf
       "#{Formatter.format(self)}\n"
+    end
+
+    # The block body in Terraform JSON syntax: attributes plus nested blocks
+    # keyed by type and labels.
+    def to_h
+      body = @__attrs__.to_h do |name, value|
+        [name, JsonSyntax.value(value, static: self.class::STATIC_REFS.include?(name))]
+      end
+      @__blocks__.each { |child| JsonSyntax.insert(body, [child.__type__, *child.__labels__], child.to_h) }
+      body
     end
 
     def to_s

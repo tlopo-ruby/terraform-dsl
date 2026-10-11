@@ -26,5 +26,15 @@ module TerraformDSL
     def to_s
       @objects.map(&:to_tf).join("\n")
     end
+
+    def to_h
+      @objects.each_with_object({}) do |block, hash|
+        JsonSyntax.insert(hash, [block.class::KEYWORD, block.__type__, *block.__labels__].compact, block.to_h)
+      end
+    end
+
+    def to_json(*)
+      JSON.pretty_generate(to_h)
+    end
   end
 end

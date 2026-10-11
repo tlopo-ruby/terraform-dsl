@@ -24,13 +24,13 @@ class TerraformDSL::BlockTest < Minitest::Test
     assert_nil block.unknown
   end
 
-  def test_assignment_syntax_and_multiple_arguments
+  def test_assignment_syntax_for_ruby_keywords_and_multiple_arguments
     block = TerraformDSL::Block.new('b') do
-      self.name = 'x'
+      self.alias = 'west'
       values 'a', 'b'
     end
 
-    assert_equal({ 'name' => 'x', 'values' => %w[a b] }, block.__attrs__)
+    assert_equal({ 'alias' => 'west', 'values' => %w[a b] }, block.__attrs__)
   end
 
   def test_ruby_method_names_can_be_attributes

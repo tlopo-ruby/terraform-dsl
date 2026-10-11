@@ -144,11 +144,30 @@ basics a Ruby object needs, plus private Kernel methods that you would expect to
 inside a block, such as `puts`, `p`, `raise`, `require`, `lambda` or `loop`. Methods of a
 surrounding class are not reachable from inside a block because `self` is the block.
 
+Ruby keywords such as `alias` cannot be called bare, so use the assignment form:
+`self.alias = 'west'`.
+
 Each block class can also be used on its own:
 
 ```ruby
 TerraformDSL::Resource.new('aws_vpc', 'main') { cidr_block '10.0.0.0/16' }.to_tf
 ```
+
+### JSON output
+
+A stack also renders in
+[Terraform JSON syntax](https://developer.hashicorp.com/terraform/language/syntax/json),
+for writing a `.tf.json` file:
+
+```ruby
+stack.to_json   # pretty printed JSON string
+stack.to_h      # the same as a Hash
+```
+
+Symbols become `"${...}"` template strings, except where JSON syntax wants a plain reference
+string: a variable's `type`, `provider`, `providers`, `depends_on`, `ignore_changes`,
+`replace_triggered_by`, and the addresses in `moved`, `import` and `removed` blocks. Repeated
+blocks, such as two `provider "aws"` blocks or two `ingress` blocks, become arrays.
 
 ## Development
 

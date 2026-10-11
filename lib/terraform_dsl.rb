@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'json'
 require_relative 'terraform_dsl/version'
 
 # A Chef like DSL that renders Terraform (HCL) configuration.
@@ -7,6 +8,7 @@ module TerraformDSL
   INDENT = '  '
 
   require_relative 'terraform_dsl/template'
+  require_relative 'terraform_dsl/json_syntax'
   require_relative 'terraform_dsl/formatter'
   require_relative 'terraform_dsl/block'
   require_relative 'terraform_dsl/terraform'
