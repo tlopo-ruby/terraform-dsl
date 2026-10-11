@@ -5,7 +5,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'terraform_dsl/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'terraform_dsl'
+  spec.name          = 'tfdsl'
   spec.version       = TerraformDSL::VERSION
   spec.authors       = ['Tiago Lopo']
   spec.email         = ['tlopo@github.com']

@@ -4,8 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`terraform_dsl` is a small Ruby gem (no runtime dependencies) that renders a Chef-like Ruby DSL as
-Terraform HCL text. The output is meant to be byte-identical to what `terraform fmt` produces.
+`tfdsl` is a small Ruby gem (no runtime dependencies) that renders a Chef-like Ruby DSL as Terraform
+HCL text. The output is meant to be byte-identical to what `terraform fmt` produces. The gem is
+published as `tfdsl` (the name `terraform_dsl` on rubygems.org belongs to someone else); the code lives
+under `lib/terraform_dsl/` in the `TerraformDSL` module, and `lib/tfdsl.rb` adds the legacy `TFDSL`
+alias. Releases go out with `bundle exec rake release` after bumping `lib/terraform_dsl/version.rb`.
 
 ## Commands
 
